@@ -170,7 +170,7 @@ export class AutoColumnSize extends BasePlugin {
    * @returns {boolean}
    */
   isEnabled() {
-    return this.hot.getSettings()[PLUGIN_KEY] !== false && !this.hot.getSettings().colWidths;
+    return this.hot.getSettings()[PLUGIN_KEY] !== false /*&& !this.hot.getSettings().colWidths*/;
   }
 
   /**
