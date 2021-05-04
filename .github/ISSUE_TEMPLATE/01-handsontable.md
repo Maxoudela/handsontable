@@ -1,3 +1,11 @@
+---
+name: Handsontable
+about: Issues regarding Handsontable.
+title: ''
+labels: ''
+assignees: ''
+---
+
 ### Description
 <!--- Tell us what happens and what should happen -->
 
@@ -15,4 +23,3 @@ https://jsfiddle.net/handsoncode/8ffpsqt6/
 * Handsontable version:
 * Browser Name and version:
 * Operating System:
-
