@@ -1,3 +1,5 @@
+import { HyperFormula } from 'hyperformula';
+
 describe('AutoColumnSize', () => {
   const id = 'testContainer';
 
@@ -418,7 +420,7 @@ describe('AutoColumnSize', () => {
     expect(document.querySelector('.htAutoSize')).toBe(null);
   });
 
-  it('should not trigger autoColumnSize when column width is defined (through colWidths)', () => {
+  it('should not trigger autoColumnSize when column width is defined (through colWidths)', async() => {
     handsontable({
       data: arrayOfObjects(),
       autoColumnSize: true,
@@ -429,11 +431,12 @@ describe('AutoColumnSize', () => {
     });
 
     setDataAtCell(0, 0, 'LongLongLongLong');
+    await sleep(50);
 
     expect(colWidth(spec().$container, 0)).toBe(70);
   });
 
-  it('should not trigger autoColumnSize when column width is defined (through columns.width)', () => {
+  it('should not trigger autoColumnSize when column width is defined (through columns.width)', async() => {
     handsontable({
       data: arrayOfObjects(),
       autoColumnSize: true,
@@ -449,12 +452,14 @@ describe('AutoColumnSize', () => {
     });
 
     setDataAtCell(0, 0, 'LongLongLongLong');
+    await sleep(50);
 
     expect(colWidth(spec().$container, 0)).toBe(70);
   });
 
   it('should consider renderer that uses conditional formatting for specific row & column index', () => {
     const data = arrayOfObjects();
+
     data.push({ id: '2', name: 'Rocket Man', lastName: 'In a tin can' });
     handsontable({
       data,
@@ -466,6 +471,7 @@ describe('AutoColumnSize', () => {
       renderer(instance, td, row, col, ...args) {
         // taken from demo/renderers.html
         Handsontable.renderers.TextRenderer.apply(this, [instance, td, row, col, ...args]);
+
         if (row === 1 && col === 0) {
           td.style.padding = '100px';
         }
@@ -809,6 +815,135 @@ describe('AutoColumnSize', () => {
 
       expect(colWidth(spec().$container, 0)).toBe(65);
       expect(colWidth(spec().$container, 1)).toBeAroundValue(225, 1);
+    });
+  });
+
+  describe('samplingRatio', () => {
+    it('should samplingRatio overwrites default samples count', () => {
+      handsontable({
+        data: [
+          ['iiiii'],
+          ['aaaaa'],
+          ['zzzzz'],
+          ['WWWWW'],
+        ],
+        autoColumnSize: {
+          samplingRatio: 4,
+        },
+      });
+
+      expect(colWidth(spec().$container, 0)).toBeGreaterThan(60);
+    });
+  });
+
+  describe('allowSampleDuplicates', () => {
+    it('should add duplicated values', () => {
+      handsontable({
+        data: [
+          ['1'],
+          ['1'],
+        ],
+        autoColumnSize: {
+          allowSampleDuplicates: true,
+        },
+        renderer(hotInstance, td, row, column, prop, value) {
+          const cellValue = row === 1 ? `${value}_WWWWW` : `${value}`;
+
+          td.innerHTML = cellValue;
+        }
+      });
+
+      expect(colWidth(spec().$container, 0)).toBeAroundValue(95, 10);
+    });
+  });
+
+  describe('modifyAutoColumnSizeSeed', () => {
+    it('should overwrite native seed generation', () => {
+      handsontable({
+        columns: [
+          { data: 'lang' },
+        ],
+        data: [
+          { lang: { code: 'en-bz', name: 'English (Belize)' } },
+          { lang: { code: 'en-ie', name: 'English (Ireland)' } },
+          { lang: { code: 'en-jm', name: 'English (Jamaica)' } },
+          { lang: { code: 'en-gb', name: 'English (United Kingdom)' } },
+        ],
+        autoColumnSize: true,
+        modifyAutoColumnSizeSeed(seed, cellMeta, cellValue) {
+          return `${cellValue.code}`;
+        },
+        renderer(hotInstance, td, row, column, prop, value) {
+          td.innerHTML = value.name;
+        }
+      });
+
+      expect(colWidth(spec().$container, 0)).toBeAroundValue(180, 5);
+    });
+  });
+
+  describe('adjust to HyperFormula calculation result', () => {
+    it('should increase width if result become to be longer', async() => {
+      handsontable({
+        data: [
+          [9, '=A1*500'],
+          [8, '=A2*500'],
+          [6, '=A3*500'],
+        ],
+        type: 'numeric',
+        formulas: {
+          engine: HyperFormula
+        }
+      });
+
+      expect(colWidth(spec().$container, 1)).toBe(50);
+
+      setDataAtCell(0, 0, 999999999999);
+      await sleep(50);
+
+      expect(colWidth(spec().$container, 1)).toBe(130);
+    });
+
+    it('should decrease width if result become to be shorter', async() => {
+      handsontable({
+        data: [
+          [999, '=A1*500'],
+          [8, '=A2*500'],
+          [6, '=A3*500'],
+        ],
+        type: 'numeric',
+        formulas: {
+          engine: HyperFormula
+        }
+      });
+
+      expect(colWidth(spec().$container, 1)).toBe(58);
+
+      setDataAtCell(0, 0, 9);
+      await sleep(50);
+
+      expect(colWidth(spec().$container, 1)).toBe(50);
+    });
+
+    it('should change width if result become to be an error', async() => {
+      handsontable({
+        data: [
+          [9, '=A1*500'],
+          [8, '=A2*500'],
+          [6, '=A3*500'],
+        ],
+        type: 'numeric',
+        formulas: {
+          engine: HyperFormula
+        }
+      });
+
+      expect(colWidth(spec().$container, 1)).toBe(50);
+
+      setDataAtCell(0, 0, 'not a number');
+      await sleep(50);
+
+      expect(colWidth(spec().$container, 1)).toBe(76);
     });
   });
 });

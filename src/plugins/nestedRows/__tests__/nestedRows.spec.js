@@ -1,3 +1,5 @@
+import { HyperFormula } from 'hyperformula';
+
 describe('NestedRows', () => {
   const id = 'testContainer';
   const dataInOrder = [
@@ -69,7 +71,9 @@ describe('NestedRows', () => {
             },
           ],
           nestedRows: true,
-          formulas: true,
+          formulas: {
+            engine: HyperFormula
+          },
         });
 
         expect(getDataAtCell(1, 0)).toBe(4);
@@ -251,6 +255,7 @@ describe('NestedRows', () => {
       });
 
       const firstParent = getPlugin('nestedRows').dataManager.getRowParent(12);
+
       expect(getPlugin('nestedRows').dataManager.countChildren(firstParent)).toBe(2);
 
       getPlugin('manualRowMove').dragRow(12, 4);
@@ -287,6 +292,7 @@ describe('NestedRows', () => {
       });
 
       const firstParent = getPlugin('nestedRows').dataManager.getRowParent(12);
+
       expect(getPlugin('nestedRows').dataManager.countChildren(firstParent)).toBe(2);
 
       getPlugin('manualRowMove').dragRow(12, 10);
